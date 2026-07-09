@@ -2,20 +2,21 @@
 
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface TopBarProps {
   title: string;
   onMenuClick?: () => void;
+  titleClassName?: string;
 }
 
 export default function TopBar({
   title,
   onMenuClick,
+  titleClassName,
 }: TopBarProps) {
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center border-b bg-background px-6">
-
-     
 
       <Button
         variant="ghost"
@@ -26,9 +27,7 @@ export default function TopBar({
         <Menu className="h-5 w-5" />
       </Button>
 
-      
-
-      <h1 className="text-xl font-semibold text-foreground">
+      <h1 className={cn("text-xl font-semibold text-foreground", titleClassName)}>
         {title}
       </h1>
 

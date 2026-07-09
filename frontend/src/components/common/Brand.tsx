@@ -16,8 +16,8 @@ export default function Brand({
       <h1
   className={
     variant === "sidebar"
-      ? "text-2xl font-bold text-foreground"
-      : "text-5xl font-bold tracking-tight text-foreground"
+      ? "text-2xl font-bold text-blue-700"
+      : "text-5xl font-bold tracking-tight text-blue-700"
   }
 >
   {title}

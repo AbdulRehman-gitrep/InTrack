@@ -11,6 +11,7 @@ export default function DashboardLayout({
     <AppShell
       role={Role.ADMIN}
       title="Dashboard"
+      titleClassName="text-blue-700"
     >
       {children}
     </AppShell>

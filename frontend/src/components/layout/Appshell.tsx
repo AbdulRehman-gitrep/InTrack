@@ -12,23 +12,21 @@ interface AppShellProps {
   children: React.ReactNode;
   role: Role;
   title: string;
+  titleClassName?: string;
 }
 
 export default function AppShell({
   children,
   role,
   title,
+  titleClassName,
 }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <div className="flex min-h-screen bg-background">
 
-      {/* Desktop Sidebar */}
-
       <Sidebar role={role} />
-
-      {/* Mobile Sidebar */}
 
       <MobileSidebar
         role={role}
@@ -36,12 +34,11 @@ export default function AppShell({
         onOpenChange={setMobileOpen}
       />
 
-      {/* Main */}
-
       <div className="flex flex-1 flex-col">
 
         <TopBar
           title={title}
+          titleClassName={titleClassName}
           onMenuClick={() => setMobileOpen(true)}
         />
 

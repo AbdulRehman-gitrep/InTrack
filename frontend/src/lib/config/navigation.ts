@@ -39,7 +39,6 @@ export const navigation: NavigationItem[] = [
     href: "/tasks",
     icon: ClipboardList,
     roles: [
-      Role.ADMIN,
       Role.MANAGER,
       Role.BUDDY,
       Role.INTERN,

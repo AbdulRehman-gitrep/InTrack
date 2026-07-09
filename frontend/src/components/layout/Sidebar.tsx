@@ -16,7 +16,7 @@ export default function Sidebar({
 }: SidebarProps) {
   return (
     <aside
-      className="hidden border-r bg-background lg:flex lg:flex-col"
+      className=" flex h-full w-full flex-col border-r bg-background"
       style={{
         width: siteConfig.sidebarWidth,
       }}

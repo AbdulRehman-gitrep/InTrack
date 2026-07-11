@@ -4,16 +4,9 @@ import SidebarHeader from "./SidebarHeader";
 import SidebarNav from "./SidebarNav";
 import UserMenu from "./UserMenu";
 
-import { Role } from "@/lib/types/role";
 import { siteConfig } from "@/lib/config/site";
 
-interface SidebarProps {
-  role: Role;
-}
-
-export default function Sidebar({
-  role,
-}: SidebarProps) {
+export default function Sidebar() {
   return (
     <aside
       className="flex h-full w-full flex-col border-r border-sidebar-border bg-sidebar"
@@ -24,13 +17,10 @@ export default function Sidebar({
       <SidebarHeader />
 
       <ScrollArea className="flex-1">
-        <SidebarNav role={role} />
+        <SidebarNav />
       </ScrollArea>
 
-      <UserMenu
-        name="Abdul Rehman"
-        role={role}
-      />
+      <UserMenu />
     </aside>
   );
 }

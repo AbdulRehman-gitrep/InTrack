@@ -14,7 +14,7 @@ import { mockUsers } from "@/lib/mock/users"
 import { mockDailyUpdates } from "@/lib/mock/daily-updates"
 import { Role } from "@/lib/types/role"
 
-const currentUserId = "4"
+import { useSession } from "@/lib/context/session"
 
 interface BuddyDashboardProps {
   userName?: string
@@ -85,6 +85,9 @@ function InternProgressCard({
 }
 
 export function BuddyDashboard({ userName = "User" }: BuddyDashboardProps) {
+  const { user: currentUser } = useSession()
+  const currentUserId = currentUser.id
+
   const stats = useMemo(() => {
     const myInterns = mockUsers.filter(
       (u) => u.role === Role.INTERN && u.buddyId === currentUserId,

@@ -1,15 +1,11 @@
 import SidebarItem from "./SidebarItem";
 
 import { navigation } from "@/lib/config/navigation";
-import { Role } from "@/lib/types/role";
+import { useSession } from "@/lib/context/session";
 
-interface SidebarNavProps {
-  role: Role;
-}
+export default function SidebarNav() {
+  const { role } = useSession();
 
-export default function SidebarNav({
-  role,
-}: SidebarNavProps) {
   const items = navigation.filter((item) =>
     item.roles.includes(role)
   );

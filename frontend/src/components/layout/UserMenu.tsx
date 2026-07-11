@@ -7,17 +7,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
-interface UserMenuProps {
-  name: string;
-  role: string;
-  onLogout?: () => void;
-}
+import { useSession } from "@/lib/context/session";
 
-export default function UserMenu({
-  name,
-  role,
-  onLogout,
-}: UserMenuProps) {
+export default function UserMenu() {
+  const { user, logout } = useSession();
+
   return (
     <>
       <Separator className="bg-sidebar-border" />
@@ -26,7 +20,7 @@ export default function UserMenu({
 
         <Avatar>
           <AvatarFallback className="bg-blue-600 text-white">
-            {name
+            {user.fullName
               .split(" ")
               .map((n) => n[0])
               .join("")}
@@ -36,11 +30,11 @@ export default function UserMenu({
         <div className="min-w-0 flex-1">
 
           <p className="truncate text-sm font-semibold text-white">
-            {name}
+            {user.fullName}
           </p>
 
           <p className="text-xs text-slate-400 capitalize">
-            {role}
+            {user.role}
           </p>
 
         </div>
@@ -48,7 +42,7 @@ export default function UserMenu({
         <Button
           variant="ghost"
           size="icon-sm"
-          onClick={onLogout}
+          onClick={logout}
           className="text-slate-400 hover:text-white hover:bg-slate-800"
         >
           <LogOut className="size-4" />

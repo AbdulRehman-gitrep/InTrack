@@ -16,7 +16,7 @@ import { mockDailyUpdates } from "@/lib/mock/daily-updates"
 import { mockWeeklyReports } from "@/lib/mock/weekly-reports"
 import { Role } from "@/lib/types/role"
 
-const currentUserId = "2"
+import { useSession } from "@/lib/context/session"
 
 interface ManagerDashboardProps {
   userName?: string
@@ -100,6 +100,9 @@ function InternProgressCard({
 }
 
 export function ManagerDashboard({ userName = "User" }: ManagerDashboardProps) {
+  const { user: currentUser } = useSession()
+  const currentUserId = currentUser.id
+
   const stats = useMemo(() => {
     const interns = mockUsers.filter(
       (u) => u.role === Role.INTERN && u.managerId === currentUserId,

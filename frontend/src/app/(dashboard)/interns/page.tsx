@@ -8,10 +8,12 @@ import { mockUsers } from "@/lib/mock/users"
 import { Input } from "@/components/ui/input"
 import { UsersTable } from "@/components/users/UsersTable"
 
-const currentUserId = "4"
+import { useSession } from "@/lib/context/session"
 
 export default function InternsPage() {
-  const role = Role.BUDDY
+  const { user } = useSession()
+  const currentUserId = user.id
+  const role = user.role
 
   const interns = useMemo<User[]>(() => {
     const all = mockUsers.filter((u) => u.role === Role.INTERN)

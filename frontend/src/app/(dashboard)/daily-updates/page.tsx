@@ -7,32 +7,48 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { UpdateCard } from "@/components/updates/UpdateCard"
 
+import { useSession } from "@/lib/context/session"
+
 import type { DailyUpdate } from "@/lib/types/update"
+import { Role } from "@/lib/types/role"
 import { mockDailyUpdates } from "@/lib/mock/daily-updates"
 import { mockUsers } from "@/lib/mock/users"
 
-const currentUserId = "6"
-
 export default function DailyUpdatesPage() {
+  const { user } = useSession()
   const [updates, setUpdates] = useState(mockDailyUpdates)
   const [content, setContent] = useState("")
   const [error, setError] = useState("")
+  const isIntern = user.role === Role.INTERN
 
   const userMap = useMemo(
     () => new Map(mockUsers.map((u) => [u.id, u])),
     [],
   )
 
-  const myUpdates = useMemo(
-    () =>
-      [...updates]
-        .filter((u) => u.internId === currentUserId)
+  const visibleUpdates = useMemo(() => {
+    if (isIntern) {
+      return [...updates]
+        .filter((u) => u.internId === user.id)
         .sort(
           (a, b) =>
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-        ),
-    [updates],
-  )
+        )
+    }
+    const internIds = mockUsers
+      .filter(
+        (u) =>
+          u.role === Role.INTERN &&
+          (u.managerId === user.id || u.buddyId === user.id),
+      )
+      .map((u) => u.id)
+    return [...updates]
+      .filter((u) => internIds.includes(u.internId))
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      )
+  }, [updates, user.id, isIntern])
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -42,7 +58,7 @@ export default function DailyUpdatesPage() {
     }
     const newUpdate: DailyUpdate = {
       id: String(Date.now()),
-      internId: currentUserId,
+      internId: user.id,
       date: new Date().toISOString().split("T")[0],
       content: content.trim(),
       isReviewed: false,
@@ -53,47 +69,59 @@ export default function DailyUpdatesPage() {
     setError("")
   }
 
+  function handleToggleReview(updateId: string) {
+    setUpdates((prev) =>
+      prev.map((u) =>
+        u.id === updateId ? { ...u, isReviewed: !u.isReviewed } : u,
+      ),
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold">Daily Updates</h1>
         <p className="text-sm text-muted-foreground">
-          Submit your daily updates and view your history.
+          {isIntern
+            ? "Submit your daily updates and view your history."
+            : "Review daily updates from your interns."}
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Submit Today&apos;s Update</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="What did you work on today? Any blockers or achievements?"
-                rows={4}
-                className="flex w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-              />
-              {error && <p className="text-xs text-red-600">{error}</p>}
-            </div>
-            <Button type="submit">
-              <Send className="mr-1.5 size-4" />
-              Submit Update
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+      {isIntern && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Submit Today&apos;s Update</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <textarea
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  placeholder="What did you work on today? Any blockers or achievements?"
+                  rows={4}
+                  className="flex w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                />
+                {error && <p className="text-xs text-red-600">{error}</p>}
+              </div>
+              <Button type="submit">
+                <Send className="mr-1.5 size-4" />
+                Submit Update
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      )}
 
       <div>
         <h2 className="text-lg font-semibold text-slate-900">
-          Update History ({myUpdates.length})
+          {isIntern ? "Update History" : "Intern Updates"} ({visibleUpdates.length})
         </h2>
       </div>
 
       <div className="space-y-4">
-        {myUpdates.map((update) => (
+        {visibleUpdates.map((update) => (
           <UpdateCard
             key={update.id}
             author={userMap.get(update.internId)!}
@@ -105,12 +133,16 @@ export default function DailyUpdatesPage() {
             })}
             content={update.content}
             isReviewed={update.isReviewed}
-            onToggleReview={() => {}}
+            onToggleReview={
+              isIntern ? undefined : () => handleToggleReview(update.id)
+            }
           />
         ))}
-        {myUpdates.length === 0 && (
+        {visibleUpdates.length === 0 && (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            No updates submitted yet.
+            {isIntern
+              ? "No updates submitted yet."
+              : "No updates from your interns."}
           </p>
         )}
       </div>

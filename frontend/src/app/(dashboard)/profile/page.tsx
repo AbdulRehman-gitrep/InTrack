@@ -3,8 +3,7 @@
 import { useState } from "react"
 import { Pencil } from "lucide-react"
 import { Role } from "@/lib/types/role"
-import type { User, EditUserPayload } from "@/lib/types/user"
-import { mockUsers } from "@/lib/mock/users"
+import type { EditUserPayload } from "@/lib/types/user"
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -12,14 +11,14 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { UserFormDialog } from "@/components/users/UserFormDialog"
 
+import { useSession } from "@/lib/context/session"
+
 const roleLabels: Record<Role, string> = {
   [Role.ADMIN]: "Administrator",
   [Role.MANAGER]: "Line Manager",
   [Role.BUDDY]: "Buddy",
   [Role.INTERN]: "Intern",
 }
-
-const currentUser: User = mockUsers[0]
 
 function getInitials(name: string): string {
   return name
@@ -39,11 +38,12 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 }
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<User>(currentUser)
+  const { user: sessionUser } = useSession()
+  const [profile, setProfile] = useState(sessionUser)
   const [editOpen, setEditOpen] = useState(false)
 
   function handleEdit(data: EditUserPayload) {
-    setUser((prev) => ({
+    setProfile((prev) => ({
       ...prev,
       fullName: data.fullName,
       email: data.email,
@@ -59,15 +59,15 @@ export default function ProfilePage() {
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
         <Avatar className="size-20">
           <AvatarFallback className="text-2xl">
-            {getInitials(user.fullName)}
+            {getInitials(profile.fullName)}
           </AvatarFallback>
         </Avatar>
         <div className="flex flex-col items-center text-center sm:items-start sm:text-left">
-          <h1 className="text-2xl font-bold">{user.fullName}</h1>
+          <h1 className="text-2xl font-bold">{profile.fullName}</h1>
           <span className="mt-1 inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700">
-            {roleLabels[user.role]}
+            {roleLabels[profile.role]}
           </span>
-          <p className="mt-1 text-sm text-muted-foreground">{user.email}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{profile.email}</p>
           <Button
             variant="outline"
             size="sm"
@@ -84,19 +84,19 @@ export default function ProfilePage() {
         <CardContent className="p-6">
           <h2 className="text-base font-semibold">Details</h2>
           <Separator className="my-3" />
-          <InfoRow label="Full Name" value={user.fullName} />
+          <InfoRow label="Full Name" value={profile.fullName} />
           <Separator />
-          <InfoRow label="Email" value={user.email} />
+          <InfoRow label="Email" value={profile.email} />
           <Separator />
-          <InfoRow label="Role" value={roleLabels[user.role]} />
+          <InfoRow label="Role" value={roleLabels[profile.role]} />
           <Separator />
-          <InfoRow label="Department" value={user.department} />
+          <InfoRow label="Department" value={profile.department} />
           <Separator />
-          <InfoRow label="Status" value={user.isActive ? "Active" : "Inactive"} />
+          <InfoRow label="Status" value={profile.isActive ? "Active" : "Inactive"} />
           <Separator />
           <InfoRow
             label="Account Created"
-            value={new Date(user.createdAt).toLocaleDateString("en-US", {
+            value={new Date(profile.createdAt).toLocaleDateString("en-US", {
               year: "numeric",
               month: "long",
               day: "numeric",
@@ -108,7 +108,7 @@ export default function ProfilePage() {
       <UserFormDialog
         open={editOpen}
         onOpenChange={setEditOpen}
-        user={user}
+        user={profile}
         onSave={handleEdit}
       />
     </div>

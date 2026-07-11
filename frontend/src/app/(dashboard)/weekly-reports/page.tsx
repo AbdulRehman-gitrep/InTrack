@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { UpdateCard } from "@/components/updates/UpdateCard"
 
+import { useSession } from "@/lib/context/session"
+
 import type { WeeklyReport } from "@/lib/types/update"
+import { Role } from "@/lib/types/role"
 import { mockWeeklyReports } from "@/lib/mock/weekly-reports"
 import { mockUsers } from "@/lib/mock/users"
-
-const currentUserId = "6"
 
 function getWeekRange(): { start: string; end: string } {
   const now = new Date()
@@ -28,25 +29,39 @@ function getWeekRange(): { start: string; end: string } {
 }
 
 export default function WeeklyReportsPage() {
+  const { user } = useSession()
   const [reports, setReports] = useState(mockWeeklyReports)
   const [content, setContent] = useState("")
   const [error, setError] = useState("")
+  const isIntern = user.role === Role.INTERN
 
   const userMap = useMemo(
     () => new Map(mockUsers.map((u) => [u.id, u])),
     [],
   )
 
-  const myReports = useMemo(
-    () =>
-      [...reports]
-        .filter((r) => r.internId === currentUserId)
+  const visibleReports = useMemo(() => {
+    if (isIntern) {
+      return [...reports]
+        .filter((r) => r.internId === user.id)
         .sort(
           (a, b) =>
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-        ),
-    [reports],
-  )
+        )
+    }
+    const internIds = mockUsers
+      .filter(
+        (u) =>
+          u.role === Role.INTERN && u.managerId === user.id,
+      )
+      .map((u) => u.id)
+    return [...reports]
+      .filter((r) => internIds.includes(r.internId))
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      )
+  }, [reports, user.id, isIntern])
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -57,7 +72,7 @@ export default function WeeklyReportsPage() {
     const { start, end } = getWeekRange()
     const newReport: WeeklyReport = {
       id: String(Date.now()),
-      internId: currentUserId,
+      internId: user.id,
       weekStart: start,
       weekEnd: end,
       content: content.trim(),
@@ -69,47 +84,59 @@ export default function WeeklyReportsPage() {
     setError("")
   }
 
+  function handleToggleReview(reportId: string) {
+    setReports((prev) =>
+      prev.map((r) =>
+        r.id === reportId ? { ...r, isReviewed: !r.isReviewed } : r,
+      ),
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold">Weekly Reports</h1>
         <p className="text-sm text-muted-foreground">
-          Submit your weekly report and view your history.
+          {isIntern
+            ? "Submit your weekly report and view your history."
+            : "Review weekly reports from your interns."}
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Submit This Week&apos;s Report</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="Summarize your work this week: what you accomplished, challenges faced, and plans for next week."
-                rows={5}
-                className="flex w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-              />
-              {error && <p className="text-xs text-red-600">{error}</p>}
-            </div>
-            <Button type="submit">
-              <Send className="mr-1.5 size-4" />
-              Submit Report
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+      {isIntern && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Submit This Week&apos;s Report</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <textarea
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  placeholder="Summarize your work this week: what you accomplished, challenges faced, and plans for next week."
+                  rows={5}
+                  className="flex w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                />
+                {error && <p className="text-xs text-red-600">{error}</p>}
+              </div>
+              <Button type="submit">
+                <Send className="mr-1.5 size-4" />
+                Submit Report
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      )}
 
       <div>
         <h2 className="text-lg font-semibold text-slate-900">
-          Report History ({myReports.length})
+          {isIntern ? "Report History" : "Intern Reports"} ({visibleReports.length})
         </h2>
       </div>
 
       <div className="space-y-4">
-        {myReports.map((report) => (
+        {visibleReports.map((report) => (
           <UpdateCard
             key={report.id}
             author={userMap.get(report.internId)!}
@@ -117,12 +144,16 @@ export default function WeeklyReportsPage() {
             title="Weekly Report"
             content={report.content}
             isReviewed={report.isReviewed}
-            onToggleReview={() => {}}
+            onToggleReview={
+              isIntern ? undefined : () => handleToggleReview(report.id)
+            }
           />
         ))}
-        {myReports.length === 0 && (
+        {visibleReports.length === 0 && (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            No reports submitted yet.
+            {isIntern
+              ? "No reports submitted yet."
+              : "No reports from your interns."}
           </p>
         )}
       </div>

@@ -15,7 +15,7 @@ import { mockWeeklyReports } from "@/lib/mock/weekly-reports"
 import { mockFeedback } from "@/lib/mock/feedback"
 import type { TaskStatus } from "@/lib/types/task"
 
-const currentUserId = "6"
+import { useSession } from "@/lib/context/session"
 
 interface InternDashboardProps {
   userName?: string
@@ -106,6 +106,9 @@ function TaskProgressCard({ tasks }: { tasks: { status: TaskStatus }[] }) {
 }
 
 export function InternDashboard({ userName = "User" }: InternDashboardProps) {
+  const { user: currentUser } = useSession()
+  const currentUserId = currentUser.id
+
   const stats = useMemo(() => {
     const myTasks = mockTasks.filter((t) => t.assigneeId === currentUserId)
     const activeTasks = myTasks.filter(

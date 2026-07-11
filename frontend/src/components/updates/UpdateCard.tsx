@@ -14,7 +14,7 @@ interface UpdateCardProps {
   title?: string
   content: string
   isReviewed: boolean
-  onToggleReview: () => void
+  onToggleReview?: () => void
 }
 
 export function UpdateCard({
@@ -56,21 +56,23 @@ export function UpdateCard({
           {content}
         </p>
       </CardContent>
-      <CardFooter className="border-t pt-3">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onToggleReview}
-          className={isReviewed ? "text-emerald-600" : "text-muted-foreground"}
-        >
-          {isReviewed ? (
-            <CheckCircle2 className="mr-1.5 size-4" />
-          ) : (
-            <Circle className="mr-1.5 size-4" />
-          )}
-          {isReviewed ? "Reviewed" : "Mark as Reviewed"}
-        </Button>
-      </CardFooter>
+      {onToggleReview && (
+        <CardFooter className="border-t pt-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onToggleReview}
+            className={isReviewed ? "text-emerald-600" : "text-muted-foreground"}
+          >
+            {isReviewed ? (
+              <CheckCircle2 className="mr-1.5 size-4" />
+            ) : (
+              <Circle className="mr-1.5 size-4" />
+            )}
+            {isReviewed ? "Reviewed" : "Mark as Reviewed"}
+          </Button>
+        </CardFooter>
+      )}
     </Card>
   )
 }

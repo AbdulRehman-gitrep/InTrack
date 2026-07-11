@@ -6,18 +6,14 @@ import Sidebar from "./Sidebar";
 import MobileSidebar from "./MobileSidebar";
 import TopBar from "./Topbar";
 
-import { Role } from "@/lib/types/role";
-
 interface AppShellProps {
   children: React.ReactNode;
-  role: Role;
   title: string;
   titleClassName?: string;
 }
 
 export default function AppShell({
   children,
-  role,
   title,
   titleClassName,
 }: AppShellProps) {
@@ -27,11 +23,10 @@ export default function AppShell({
     <div className="flex h-screen overflow-hidden bg-background">
 
       <div className="hidden lg:block">
-        <Sidebar role={role} />
+        <Sidebar />
       </div>
 
       <MobileSidebar
-        role={role}
         open={mobileOpen}
         onOpenChange={setMobileOpen}
       />

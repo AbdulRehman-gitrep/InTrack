@@ -1,4 +1,4 @@
-import { ClipboardCheck, Clock, Users, FileText } from "lucide-react"
+import { ClipboardCheck, Clock, FileText, Users } from "lucide-react"
 
 import { StatCard } from "@/components/dashboard/cards/StatCard"
 import { DashboardSection } from "@/components/dashboard/layout/DashboardSection"
@@ -16,6 +16,8 @@ export function ManagerDashboard() {
           iconColor="text-blue-700"
           iconBackground="bg-blue-100"
           valueClassName="text-blue-700"
+          titleClassName="text-blue-700"
+          accentBorderClassName="border-t-[3px] border-blue-500"
         />
         <StatCard
           title="Pending Reviews"
@@ -25,6 +27,8 @@ export function ManagerDashboard() {
           iconColor="text-red-600"
           iconBackground="bg-red-100"
           valueClassName="text-red-600"
+          titleClassName="text-red-600"
+          accentBorderClassName="border-t-[3px] border-red-500"
         />
         <StatCard
           title="Active Tasks"
@@ -34,15 +38,19 @@ export function ManagerDashboard() {
           iconColor="text-blue-700"
           iconBackground="bg-blue-100"
           valueClassName="text-blue-700"
+          titleClassName="text-blue-700"
+          accentBorderClassName="border-t-[3px] border-blue-500"
         />
         <StatCard
           title="Weekly Reports"
           value={12}
           description="Submitted this week"
           icon={FileText}
-          iconColor="text-green-600"
-          iconBackground="bg-green-100"
-          valueClassName="text-green-600"
+          iconColor="text-emerald-600"
+          iconBackground="bg-emerald-100"
+          valueClassName="text-emerald-600"
+          titleClassName="text-emerald-600"
+          accentBorderClassName="border-t-[3px] border-emerald-500"
         />
       </StatsGrid>
     </DashboardSection>

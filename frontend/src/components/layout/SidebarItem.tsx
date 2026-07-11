@@ -26,13 +26,13 @@ export default function SidebarItem({
     <Link
       href={href}
       className={cn(
-        "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+        "flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-200",
         isActive
-          ? "bg-[#EFF6FF] text-primary"
-          : "text-muted-foreground hover:bg-[#EFF6FF] hover:text-primary"
+          ? "bg-blue-950/70 text-white border-l-[4px] border-blue-500"
+          : "text-slate-300 hover:bg-slate-900 hover:text-white"
       )}
     >
-      <Icon className="h-5 w-5 shrink-0" />
+      <Icon className={cn("h-5 w-5 shrink-0", isActive ? "text-blue-400" : "text-slate-400")} />
 
       <span>{title}</span>
     </Link>

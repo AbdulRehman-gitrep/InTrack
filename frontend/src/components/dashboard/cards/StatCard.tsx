@@ -12,6 +12,7 @@ interface StatCardProps {
   iconBackground?: string
   valueClassName?: string
   titleClassName?: string
+  accentBorderClassName?: string
 }
 
 export function StatCard({
@@ -23,9 +24,10 @@ export function StatCard({
   iconBackground = "bg-primary/10",
   valueClassName,
   titleClassName,
+  accentBorderClassName,
 }: StatCardProps) {
   return (
-    <Card className="transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
+    <Card className={cn("shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5", accentBorderClassName)}>
       <CardHeader className="flex flex-row items-center justify-between">
         <div className="space-y-1">
           <CardTitle className={cn("text-sm font-medium", titleClassName ?? "text-muted-foreground")}>

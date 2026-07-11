@@ -32,8 +32,8 @@ function getInitials(name: string): string {
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between py-3">
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <span className="text-sm font-medium">{value}</span>
+      <span className="text-sm font-medium text-slate-900">{label}</span>
+      <span className="text-sm text-muted-foreground">{value}</span>
     </div>
   )
 }

@@ -15,7 +15,7 @@ export default function SidebarNav({
   );
 
   return (
-    <nav className="flex flex-col gap-1 px-4 py-4">
+    <nav className="flex flex-col gap-1.5 px-3 py-4">
       {items.map((item) => (
         <SidebarItem
           key={item.href}

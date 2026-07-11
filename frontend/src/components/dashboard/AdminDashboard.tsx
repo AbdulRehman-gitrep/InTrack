@@ -14,10 +14,10 @@ interface AdminDashboardProps {
 }
 
 const departments = [
-  { title: "Software Engineering", count: 18, icon: Code2 },
-  { title: "AI/ML", count: 7, icon: BrainCircuit },
-  { title: "Data Engineering", count: 10, icon: Database },
-  { title: "QA", count: 12, icon: Bug },
+  { title: "Software Engineering", count: 18, icon: Code2, iconColor: "text-blue-600", iconBackground: "bg-blue-100", titleClassName: "text-blue-600", accentBorderClassName: "border-t-[3px] border-blue-500" },
+  { title: "AI/ML", count: 7, icon: BrainCircuit, iconColor: "text-violet-600", iconBackground: "bg-violet-100", titleClassName: "text-violet-600", accentBorderClassName: "border-t-[3px] border-violet-500" },
+  { title: "Data Engineering", count: 10, icon: Database, iconColor: "text-orange-600", iconBackground: "bg-orange-100", titleClassName: "text-orange-600", accentBorderClassName: "border-t-[3px] border-orange-500" },
+  { title: "QA", count: 12, icon: Bug, iconColor: "text-red-500", iconBackground: "bg-red-100", titleClassName: "text-red-500", accentBorderClassName: "border-t-[3px] border-red-500" },
 ]
 
 function getGreeting(): string {
@@ -43,11 +43,13 @@ export function AdminDashboard({ userName = "User" }: AdminDashboardProps) {
     <div className="space-y-8">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="space-y-1">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <span className="text-xs font-semibold uppercase tracking-widest text-blue-600">
             System Overview
           </span>
-          <h1 className="text-2xl font-bold">{greeting}, {userName}.</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-2xl font-extrabold tracking-tight text-blue-950">
+            {greeting}, {userName}.
+          </h1>
+          <p className="text-sm text-slate-500">
             Here&apos;s what is happening across the internship portal today.
           </p>
         </div>
@@ -68,24 +70,26 @@ export function AdminDashboard({ userName = "User" }: AdminDashboardProps) {
             iconBackground="bg-blue-100"
             valueClassName="text-blue-700"
             titleClassName="text-blue-700"
+            accentBorderClassName="border-t-[3px] border-blue-500"
           />
           <StatCard
             title="Interns"
             value={42}
             description="Active interns"
             icon={GraduationCap}
-            iconColor="text-green-600"
-            iconBackground="bg-green-100"
-            valueClassName="text-green-600"
-            titleClassName="text-green-600"
+            iconColor="text-emerald-600"
+            iconBackground="bg-emerald-100"
+            valueClassName="text-emerald-600"
+            titleClassName="text-emerald-600"
+            accentBorderClassName="border-t-[3px] border-emerald-500"
           />
         </StatsGrid>
       </DashboardSection>
 
       <section className="space-y-4">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight">Department Overview</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="text-2xl font-bold text-slate-900">Department Overview</h2>
+          <p className="text-sm text-slate-500">
             Distribution of interns across internship departments.
           </p>
         </div>
@@ -96,6 +100,10 @@ export function AdminDashboard({ userName = "User" }: AdminDashboardProps) {
               title={dept.title}
               count={dept.count}
               icon={dept.icon}
+              iconColor={dept.iconColor}
+              iconBackground={dept.iconBackground}
+              titleClassName={dept.titleClassName}
+              accentBorderClassName={dept.accentBorderClassName}
             />
           ))}
         </div>

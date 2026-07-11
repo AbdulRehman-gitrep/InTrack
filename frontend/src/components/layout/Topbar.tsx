@@ -16,7 +16,7 @@ export default function TopBar({
   titleClassName,
 }: TopBarProps) {
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center border-b bg-background px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center border-b border-slate-200 bg-white px-6">
 
       <Button
         variant="ghost"
@@ -27,7 +27,7 @@ export default function TopBar({
         <Menu className="h-5 w-5" />
       </Button>
 
-      <h1 className={cn("text-xl font-semibold text-foreground", titleClassName)}>
+      <h1 className={cn("text-xl font-bold text-slate-900", titleClassName)}>
         {title}
       </h1>
 

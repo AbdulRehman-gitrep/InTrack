@@ -24,7 +24,7 @@ export default function AppShell({
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex h-screen overflow-hidden bg-background">
 
       <Sidebar role={role} />
 
@@ -34,7 +34,7 @@ export default function AppShell({
         onOpenChange={setMobileOpen}
       />
 
-      <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col overflow-hidden">
 
         <TopBar
           title={title}
@@ -42,7 +42,7 @@ export default function AppShell({
           onMenuClick={() => setMobileOpen(true)}
         />
 
-        <main className="flex-1 p-6">
+        <main className="flex-1 overflow-y-auto p-6">
 
           {children}
 

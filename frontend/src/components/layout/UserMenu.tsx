@@ -16,12 +16,12 @@ export default function UserMenu({
 }: UserMenuProps) {
   return (
     <>
-      <Separator />
+      <Separator className="bg-sidebar-border" />
 
-      <div className="flex items-center gap-3 p-4">
+      <div className="flex items-center gap-3 px-4 py-4">
 
         <Avatar>
-          <AvatarFallback>
+          <AvatarFallback className="bg-blue-600 text-white">
             {name
               .split(" ")
               .map((n) => n[0])
@@ -31,11 +31,11 @@ export default function UserMenu({
 
         <div className="min-w-0">
 
-          <p className="truncate text-sm font-semibold">
+          <p className="truncate text-sm font-semibold text-white">
             {name}
           </p>
 
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-slate-400">
             {role}
           </p>
 

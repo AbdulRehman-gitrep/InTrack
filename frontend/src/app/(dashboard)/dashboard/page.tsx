@@ -5,7 +5,7 @@ import { BuddyDashboard } from "@/components/dashboard/BuddyDashboard"
 import { InternDashboard } from "@/components/dashboard/InternDashboard"
 import { ManagerDashboard } from "@/components/dashboard/ManagerDashboard"
 
-const role: Role = Role.BUDDY
+const role: Role = Role.INTERN
 
 export default function DashboardPage() {
   switch (role) {

@@ -9,7 +9,7 @@ export default function DashboardLayout({
 }) {
   return (
     <AppShell
-      role={Role.MANAGER}
+      role={Role.BUDDY}
       title="Dashboard"
       titleClassName="text-blue-700"
     >

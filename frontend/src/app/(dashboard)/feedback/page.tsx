@@ -12,7 +12,7 @@ import type { Feedback } from "@/lib/types/feedback"
 import { mockUsers } from "@/lib/mock/users"
 import { mockFeedback } from "@/lib/mock/feedback"
 
-const currentUserId = "2"
+const currentUserId = "4"
 
 export default function FeedbackPage() {
   const [feedback, setFeedback] = useState(mockFeedback)
@@ -26,7 +26,7 @@ export default function FeedbackPage() {
   )
 
   const myInterns = useMemo(
-    () => mockUsers.filter((u) => u.role === Role.INTERN && u.managerId === currentUserId),
+    () => mockUsers.filter((u) => u.role === Role.INTERN && u.buddyId === currentUserId),
     [],
   )
 

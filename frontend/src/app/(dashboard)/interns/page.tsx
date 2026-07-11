@@ -8,15 +8,15 @@ import { mockUsers } from "@/lib/mock/users"
 import { Input } from "@/components/ui/input"
 import { UsersTable } from "@/components/users/UsersTable"
 
-const currentUserId = "2"
+const currentUserId = "4"
 
 export default function InternsPage() {
-  const role = Role.MANAGER
+  const role = Role.BUDDY
 
   const interns = useMemo<User[]>(() => {
     const all = mockUsers.filter((u) => u.role === Role.INTERN)
-    if (role === Role.MANAGER) {
-      return all.filter((u) => u.managerId === currentUserId)
+    if (role === Role.BUDDY) {
+      return all.filter((u) => u.buddyId === currentUserId)
     }
     return all
   }, [])
@@ -39,9 +39,7 @@ export default function InternsPage() {
       <div>
         <h1 className="text-2xl font-semibold">Interns</h1>
         <p className="text-sm text-muted-foreground">
-          {role === Role.MANAGER
-            ? "Interns assigned to you."
-            : "View and manage all interns."}
+          Interns assigned to you.
         </p>
       </div>
 

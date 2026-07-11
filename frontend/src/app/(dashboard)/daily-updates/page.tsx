@@ -10,23 +10,41 @@ import { mockDailyUpdates } from "@/lib/mock/daily-updates"
 import { mockUsers } from "@/lib/mock/users"
 import { Role } from "@/lib/types/role"
 
+const currentUserId = "4"
+
 export default function DailyUpdatesPage() {
   const [updates, setUpdates] = useState(mockDailyUpdates)
   const [search, setSearch] = useState("")
   const [tab, setTab] = useState("all")
 
-  const interns = useMemo(
-    () => new Map(
-      mockUsers
-        .filter((u) => u.role === Role.INTERN)
-        .map((u) => [u.id, u]),
-    ),
+  const myInternIds = useMemo(
+    () =>
+      new Set(
+        mockUsers
+          .filter((u) => u.role === Role.INTERN && u.buddyId === currentUserId)
+          .map((u) => u.id),
+      ),
     [],
+  )
+
+  const interns = useMemo(
+    () =>
+      new Map(
+        mockUsers
+          .filter((u) => u.role === Role.INTERN)
+          .map((u) => [u.id, u]),
+      ),
+    [],
+  )
+
+  const myUpdates = useMemo(
+    () => updates.filter((u) => myInternIds.has(u.internId)),
+    [updates, myInternIds],
   )
 
   const filtered = useMemo(
     () =>
-      updates.filter((u) => {
+      myUpdates.filter((u) => {
         const intern = interns.get(u.internId)
         const matchesSearch =
           u.content.toLowerCase().includes(search.toLowerCase()) ||
@@ -35,7 +53,7 @@ export default function DailyUpdatesPage() {
           tab === "all" ? true : tab === "reviewed" ? u.isReviewed : !u.isReviewed
         return matchesSearch && matchesTab
       }),
-    [updates, search, tab, interns],
+    [myUpdates, search, tab, interns],
   )
 
   function handleToggleReview(id: string) {
@@ -51,7 +69,7 @@ export default function DailyUpdatesPage() {
       <div>
         <h1 className="text-2xl font-semibold">Daily Updates</h1>
         <p className="text-sm text-muted-foreground">
-          Review daily updates submitted by interns.
+          Review daily updates from your interns.
         </p>
       </div>
 

@@ -26,7 +26,9 @@ export default function AppShell({
   return (
     <div className="flex h-screen overflow-hidden bg-background">
 
-      <Sidebar role={role} />
+      <div className="hidden lg:block">
+        <Sidebar role={role} />
+      </div>
 
       <MobileSidebar
         role={role}

@@ -1,13 +1,12 @@
 "use client"
 
-import { useMemo } from "react"
-import { BrainCircuit, Bug, Calendar, Code2, Database, GraduationCap, Users } from "lucide-react"
+import { BrainCircuit, Bug, Code2, Database, GraduationCap, Users } from "lucide-react"
 
 import { DepartmentCard } from "@/components/dashboard/cards/DepartmentCard"
 import { StatCard } from "@/components/dashboard/cards/StatCard"
 import { DashboardSection } from "@/components/dashboard/layout/DashboardSection"
+import { DashboardHeader } from "@/components/dashboard/layout/DashboardHeader"
 import { StatsGrid } from "@/components/dashboard/layout/StatsGrid"
-import { Button } from "@/components/ui/button"
 
 interface AdminDashboardProps {
   userName?: string
@@ -20,44 +19,14 @@ const departments = [
   { title: "QA", count: 12, icon: Bug, iconColor: "text-red-500", iconBackground: "bg-red-100", titleClassName: "text-red-500", accentBorderClassName: "border-t-[3px] border-red-500" },
 ]
 
-function getGreeting(): string {
-  const hour = new Date().getHours()
-  if (hour < 12) return "Good Morning"
-  if (hour < 17) return "Good Afternoon"
-  return "Good Evening"
-}
-
-function getFormattedDate(): string {
-  return new Date().toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  })
-}
-
 export function AdminDashboard({ userName = "User" }: AdminDashboardProps) {
-  const greeting = useMemo(() => getGreeting(), [])
-  const today = useMemo(() => getFormattedDate(), [])
-
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="space-y-1">
-          <span className="text-xs font-semibold uppercase tracking-widest text-blue-600">
-            System Overview
-          </span>
-          <h1 className="text-2xl font-extrabold tracking-tight text-blue-950">
-            {greeting}, {userName}.
-          </h1>
-          <p className="text-sm text-slate-500">
-            Here&apos;s what is happening across the internship portal today.
-          </p>
-        </div>
-        <Button variant="outline" className="flex items-center gap-2 self-start md:self-auto">
-          <Calendar className="size-4" />
-          {today}
-        </Button>
-      </div>
+      <DashboardHeader
+        userName={userName}
+        tagline="Here&apos;s what is happening across the internship portal today."
+        label="System Overview"
+      />
 
       <DashboardSection title="Overview">
         <StatsGrid>

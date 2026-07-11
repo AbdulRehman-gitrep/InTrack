@@ -14,17 +14,10 @@ export default function Brand({
   return (
     <div className={centered ? "text-center" : ""}>
       {variant === "sidebar" ? (
-        <div className="flex items-center gap-2">
-          <img
-            src="/icon.png"
-            alt="InTrack"
-            className="h-8 w-auto"
-          />
-          <h1 className="text-2xl font-bold">
-            <span style={{ color: "#ffffff" }}>In</span>
-            <span className="text-blue-500">Track</span>
-          </h1>
-        </div>
+        <h1 className="text-2xl font-bold">
+          <span style={{ color: "#ffffff" }}>In</span>
+          <span className="text-blue-500">Track</span>
+        </h1>
       ) : (
         <h1 className="text-5xl font-bold tracking-tight text-foreground">
           {title}

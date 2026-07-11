@@ -73,6 +73,7 @@ export const navigation: NavigationItem[] = [
     roles: [
       Role.INTERN,
       Role.BUDDY,
+      Role.MANAGER,
     ],
   },
 

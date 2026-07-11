@@ -19,6 +19,7 @@ import {
 
 interface UsersTableProps {
   users: User[]
+  role?: Role
   onEdit: (user: User) => void
   onToggleActive: (userId: string) => void
   onAssignRole: (user: User) => void
@@ -50,12 +51,14 @@ function getInitials(name: string): string {
 
 export function UsersTable({
   users,
+  role,
   onEdit,
   onToggleActive,
   onAssignRole,
   onAssignManager,
   onAssignBuddy,
 }: UsersTableProps) {
+  const isAdmin = role === Role.ADMIN
   return (
     <div className="overflow-x-auto rounded-xl border">
       <table className="w-full text-sm">
@@ -67,7 +70,7 @@ export function UsersTable({
             <th className="px-4 py-3">Manager</th>
             <th className="px-4 py-3">Buddy</th>
             <th className="px-4 py-3">Status</th>
-            <th className="px-4 py-3" />
+            {isAdmin && <th className="px-4 py-3" />}
           </tr>
         </thead>
         <tbody>
@@ -115,59 +118,61 @@ export function UsersTable({
                     {user.isActive ? "Active" : "Inactive"}
                   </span>
                 </td>
-                <td className="px-4 py-3">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      render={
-                        <Button variant="ghost" size="icon-sm">
-                          <EllipsisVertical className="size-4" />
-                        </Button>
-                      }
-                    />
-                    <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuGroup>
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      </DropdownMenuGroup>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => onEdit(user)}>
-                        <Edit className="size-4" />
-                        Edit
-                      </DropdownMenuItem>
-                      {user.role !== Role.INTERN && (
-                        <DropdownMenuItem onClick={() => onAssignRole(user)}>
-                          <Shield className="size-4" />
-                          Assign Role
+                {isAdmin && (
+                  <td className="px-4 py-3">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        render={
+                          <Button variant="ghost" size="icon-sm">
+                            <EllipsisVertical className="size-4" />
+                          </Button>
+                        }
+                      />
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuGroup>
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        </DropdownMenuGroup>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => onEdit(user)}>
+                          <Edit className="size-4" />
+                          Edit
                         </DropdownMenuItem>
-                      )}
-                      {user.role === Role.INTERN && (
-                        <>
-                          <DropdownMenuItem onClick={() => onAssignManager(user)}>
-                            <UserCog className="size-4" />
-                            Assign Manager
+                        {user.role !== Role.INTERN && (
+                          <DropdownMenuItem onClick={() => onAssignRole(user)}>
+                            <Shield className="size-4" />
+                            Assign Role
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onAssignBuddy(user)}>
-                            <UserPlus className="size-4" />
-                            Assign Buddy
-                          </DropdownMenuItem>
-                        </>
-                      )}
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => onToggleActive(user.id)}>
-                        {user.isActive ? (
+                        )}
+                        {user.role === Role.INTERN && (
                           <>
-                            <EyeOff className="size-4" />
-                            Deactivate
-                          </>
-                        ) : (
-                          <>
-                            <RotateCcw className="size-4" />
-                            Activate
+                            <DropdownMenuItem onClick={() => onAssignManager(user)}>
+                              <UserCog className="size-4" />
+                              Assign Manager
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => onAssignBuddy(user)}>
+                              <UserPlus className="size-4" />
+                              Assign Buddy
+                            </DropdownMenuItem>
                           </>
                         )}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </td>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => onToggleActive(user.id)}>
+                          {user.isActive ? (
+                            <>
+                              <EyeOff className="size-4" />
+                              Deactivate
+                            </>
+                          ) : (
+                            <>
+                              <RotateCcw className="size-4" />
+                              Activate
+                            </>
+                          )}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </td>
+                )}
               </tr>
             )
           })}

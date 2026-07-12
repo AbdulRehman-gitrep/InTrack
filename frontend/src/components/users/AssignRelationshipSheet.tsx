@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Role } from "@/lib/types/role"
 import type { User } from "@/lib/types/user"
-import { getUsersByRole } from "@/lib/mock/users"
+import { userRepository } from "@/lib/repositories/user.repository"
 
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -32,10 +32,18 @@ export function AssignRelationshipSheet({
   onAssign,
 }: AssignRelationshipSheetProps) {
   const targetRole = type === "manager" ? Role.MANAGER : Role.BUDDY
-  const candidates = getUsersByRole(targetRole).filter((u) => u.id !== user.id && u.isActive)
+  const [candidates, setCandidates] = useState<User[]>([])
 
   const currentId = type === "manager" ? user.managerId : user.buddyId
   const [selectedId, setSelectedId] = useState(currentId ?? "none")
+
+  useEffect(() => {
+    async function load() {
+      const users = await userRepository.getUsersByRole(targetRole)
+      setCandidates(users.filter((u) => u.id !== user.id && u.isActive))
+    }
+    load()
+  }, [user.id, targetRole])
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

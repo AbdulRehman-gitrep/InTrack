@@ -1,9 +1,9 @@
 "use client"
 
 import { Edit, EllipsisVertical, EyeOff, RotateCcw, Shield, UserCog, UserPlus } from "lucide-react"
+import { useMemo } from "react"
 import { Role } from "@/lib/types/role"
 import type { User } from "@/lib/types/user"
-import { getUserById } from "@/lib/mock/users"
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -59,6 +59,7 @@ export function UsersTable({
   onAssignBuddy,
 }: UsersTableProps) {
   const isAdmin = role === Role.ADMIN
+  const userMap = useMemo(() => new Map(users.map((u) => [u.id, u])), [users])
   return (
     <div className="overflow-x-auto rounded-xl border">
       <table className="w-full text-sm">
@@ -75,8 +76,8 @@ export function UsersTable({
         </thead>
         <tbody>
           {users.map((user) => {
-            const manager = user.managerId ? getUserById(user.managerId) : null
-            const buddy = user.buddyId ? getUserById(user.buddyId) : null
+            const manager = user.managerId ? userMap.get(user.managerId) : null
+            const buddy = user.buddyId ? userMap.get(user.buddyId) : null
 
             return (
               <tr key={user.id} className="border-b last:border-b-0 hover:bg-muted/30">

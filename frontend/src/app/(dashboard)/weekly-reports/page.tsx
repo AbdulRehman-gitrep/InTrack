@@ -1,18 +1,20 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Send } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { UpdateCardSkeleton } from "@/components/ui/skeleton"
 import { UpdateCard } from "@/components/updates/UpdateCard"
 
 import { useSession } from "@/lib/context/session"
 
 import type { WeeklyReport } from "@/lib/types/update"
+import type { User } from "@/lib/types/user"
 import { Role } from "@/lib/types/role"
-import { mockWeeklyReports } from "@/lib/mock/weekly-reports"
-import { mockUsers } from "@/lib/mock/users"
+import { reportRepository } from "@/lib/repositories/report.repository"
+import { userRepository } from "@/lib/repositories/user.repository"
 
 function getWeekRange(): { start: string; end: string } {
   const now = new Date()
@@ -30,15 +32,28 @@ function getWeekRange(): { start: string; end: string } {
 
 export default function WeeklyReportsPage() {
   const { user } = useSession()
-  const [reports, setReports] = useState(mockWeeklyReports)
+  const [reports, setReports] = useState<WeeklyReport[]>([])
+  const [allUsers, setAllUsers] = useState<User[]>([])
   const [content, setContent] = useState("")
   const [error, setError] = useState("")
+  const [loading, setLoading] = useState(true)
   const isIntern = user.role === Role.INTERN
 
-  const userMap = useMemo(
-    () => new Map(mockUsers.map((u) => [u.id, u])),
-    [],
-  )
+  useEffect(() => {
+    async function load() {
+      setLoading(true)
+      const [loadedReports, loadedUsers] = await Promise.all([
+        reportRepository.getWeeklyReports(),
+        userRepository.getUsers(),
+      ])
+      setReports(loadedReports)
+      setAllUsers(loadedUsers)
+      setLoading(false)
+    }
+    load()
+  }, [])
+
+  const userMap = useMemo(() => new Map(allUsers.map((u) => [u.id, u])), [allUsers])
 
   const visibleReports = useMemo(() => {
     if (isIntern) {
@@ -49,7 +64,7 @@ export default function WeeklyReportsPage() {
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
         )
     }
-    const internIds = mockUsers
+    const internIds = allUsers
       .filter(
         (u) =>
           u.role === Role.INTERN && u.managerId === user.id,
@@ -61,35 +76,35 @@ export default function WeeklyReportsPage() {
         (a, b) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       )
-  }, [reports, user.id, isIntern])
+  }, [reports, allUsers, user.id, isIntern])
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!content.trim()) {
       setError("Write your report before submitting.")
       return
     }
     const { start, end } = getWeekRange()
-    const newReport: WeeklyReport = {
-      id: String(Date.now()),
+    const created = await reportRepository.submitWeeklyReport({
       internId: user.id,
       weekStart: start,
       weekEnd: end,
       content: content.trim(),
-      isReviewed: false,
-      createdAt: new Date().toISOString(),
-    }
-    setReports((prev) => [newReport, ...prev])
+    })
+    setReports((prev) => [created, ...prev])
     setContent("")
     setError("")
   }
 
-  function handleToggleReview(reportId: string) {
-    setReports((prev) =>
-      prev.map((r) =>
-        r.id === reportId ? { ...r, isReviewed: !r.isReviewed } : r,
-      ),
-    )
+  async function handleToggleReview(reportId: string) {
+    const updated = await reportRepository.markReportReviewed(reportId)
+    if (updated) {
+      setReports((prev) =>
+        prev.map((r) =>
+          r.id === reportId ? updated : r,
+        ),
+      )
+    }
   }
 
   return (
@@ -136,20 +151,28 @@ export default function WeeklyReportsPage() {
       </div>
 
       <div className="space-y-4">
-        {visibleReports.map((report) => (
-          <UpdateCard
-            key={report.id}
-            author={userMap.get(report.internId)!}
-            dateLabel={`${new Date(report.weekStart).toLocaleDateString("en-US", { month: "short", day: "numeric" })} – ${new Date(report.weekEnd).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`}
-            title="Weekly Report"
-            content={report.content}
-            isReviewed={report.isReviewed}
-            onToggleReview={
-              isIntern ? undefined : () => handleToggleReview(report.id)
-            }
-          />
-        ))}
-        {visibleReports.length === 0 && (
+        {loading ? (
+          <>
+            {[0, 1, 2].map((i) => (
+              <UpdateCardSkeleton key={i} />
+            ))}
+          </>
+        ) : (
+          visibleReports.map((report) => (
+            <UpdateCard
+              key={report.id}
+              author={userMap.get(report.internId)!}
+              dateLabel={`${new Date(report.weekStart).toLocaleDateString("en-US", { month: "short", day: "numeric" })} – ${new Date(report.weekEnd).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`}
+              title="Weekly Report"
+              content={report.content}
+              isReviewed={report.isReviewed}
+              onToggleReview={
+                isIntern ? undefined : () => handleToggleReview(report.id)
+              }
+            />
+          ))
+        )}
+        {!loading && visibleReports.length === 0 && (
           <p className="py-8 text-center text-sm text-muted-foreground">
             {isIntern
               ? "No reports submitted yet."

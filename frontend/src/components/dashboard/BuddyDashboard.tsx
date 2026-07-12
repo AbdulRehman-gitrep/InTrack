@@ -1,8 +1,9 @@
 "use client"
 
-import { useMemo } from "react"
+import { useState, useEffect } from "react"
 import { CalendarDays, MessageSquare, Users } from "lucide-react"
 
+import { Skeleton } from "@/components/ui/skeleton"
 import { StatCard } from "@/components/dashboard/cards/StatCard"
 import { DashboardHeader } from "@/components/dashboard/layout/DashboardHeader"
 import { DashboardSection } from "@/components/dashboard/layout/DashboardSection"
@@ -10,11 +11,9 @@ import { StatsGrid } from "@/components/dashboard/layout/StatsGrid"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-import { mockUsers } from "@/lib/mock/users"
-import { mockDailyUpdates } from "@/lib/mock/daily-updates"
-import { Role } from "@/lib/types/role"
-
 import { useSession } from "@/lib/context/session"
+import { dashboardRepository } from "@/lib/repositories/dashboard.repository"
+import type { User } from "@/lib/types/user"
 
 interface BuddyDashboardProps {
   userName?: string
@@ -84,42 +83,74 @@ function InternProgressCard({
   )
 }
 
+function StatCardSkeleton() {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="size-8 rounded-lg" />
+      </CardHeader>
+      <CardContent>
+        <Skeleton className="mb-1 h-8 w-16" />
+        <Skeleton className="h-3 w-28" />
+      </CardContent>
+    </Card>
+  )
+}
+
+function InternProgressCardSkeleton() {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center gap-3 pb-3">
+        <Skeleton className="size-9 rounded-full" />
+        <div className="space-y-1.5">
+          <Skeleton className="h-4 w-28" />
+          <Skeleton className="h-3 w-20" />
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {[0, 1].map((i) => (
+          <div key={i} className="space-y-1.5">
+            <Skeleton className="h-3 w-32" />
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-2 flex-1 rounded-full" />
+              <Skeleton className="h-3 w-8" />
+            </div>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  )
+}
+
 export function BuddyDashboard({ userName = "User" }: BuddyDashboardProps) {
   const { user: currentUser } = useSession()
-  const currentUserId = currentUser.id
+  const [loading, setLoading] = useState(true)
+  const [progress, setProgress] = useState<{
+    intern: User
+    updatesReviewed: number
+    totalUpdates: number
+    feedbackCount: number
+  }[]>([])
 
-  const stats = useMemo(() => {
-    const myInterns = mockUsers.filter(
-      (u) => u.role === Role.INTERN && u.buddyId === currentUserId,
-    )
-    const pendingUpdates = mockDailyUpdates.filter(
-      (u) => !u.isReviewed && myInterns.some((i) => i.id === u.internId),
-    )
+  const [stats, setStats] = useState({
+    assignedInterns: 0,
+    pendingUpdates: 0,
+  })
 
-    return {
-      assignedInterns: myInterns.length,
-      pendingUpdates: pendingUpdates.length,
+  useEffect(() => {
+    async function load() {
+      setLoading(true)
+      const [loadedStats, loadedProgress] = await Promise.all([
+        dashboardRepository.getBuddyStats(currentUser.id),
+        dashboardRepository.getBuddyInternProgress(currentUser.id),
+      ])
+      setStats(loadedStats)
+      setProgress(loadedProgress)
+      setLoading(false)
     }
-  }, [])
-
-  const internProgress = useMemo(() => {
-    const myInterns = mockUsers.filter(
-      (u) => u.role === Role.INTERN && u.buddyId === currentUserId,
-    )
-
-    return myInterns.map((intern) => {
-      const internUpdates = mockDailyUpdates.filter((u) => u.internId === intern.id)
-      const updatesReviewed = internUpdates.filter((u) => u.isReviewed).length
-      const feedbackCount = internUpdates.length
-
-      return {
-        intern,
-        updatesReviewed,
-        totalUpdates: internUpdates.length,
-        feedbackCount,
-      }
-    })
-  }, [])
+    load()
+  }, [currentUser.id])
 
   return (
     <div className="space-y-8">
@@ -131,39 +162,49 @@ export function BuddyDashboard({ userName = "User" }: BuddyDashboardProps) {
 
       <DashboardSection title="Overview">
         <StatsGrid>
-          <StatCard
-            title="Assigned Interns"
-            value={stats.assignedInterns}
-            description="Under your guidance"
-            icon={Users}
-            iconColor="text-blue-700"
-            iconBackground="bg-blue-100"
-            valueClassName="text-blue-700"
-            titleClassName="text-blue-700"
-            accentBorderClassName="border-t-[3px] border-blue-500"
-          />
-          <StatCard
-            title="Pending Daily Updates"
-            value={stats.pendingUpdates}
-            description="Awaiting review"
-            icon={CalendarDays}
-            iconColor="text-amber-600"
-            iconBackground="bg-amber-100"
-            valueClassName="text-amber-600"
-            titleClassName="text-amber-600"
-            accentBorderClassName="border-t-[3px] border-amber-500"
-          />
-          <StatCard
-            title="Feedback Given"
-            value={8}
-            description="This month"
-            icon={MessageSquare}
-            iconColor="text-emerald-600"
-            iconBackground="bg-emerald-100"
-            valueClassName="text-emerald-600"
-            titleClassName="text-emerald-600"
-            accentBorderClassName="border-t-[3px] border-emerald-500"
-          />
+          {loading ? (
+            <>
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+            </>
+          ) : (
+            <>
+              <StatCard
+                title="Assigned Interns"
+                value={stats.assignedInterns}
+                description="Under your guidance"
+                icon={Users}
+                iconColor="text-blue-700"
+                iconBackground="bg-blue-100"
+                valueClassName="text-blue-700"
+                titleClassName="text-blue-700"
+                accentBorderClassName="border-t-[3px] border-blue-500"
+              />
+              <StatCard
+                title="Pending Daily Updates"
+                value={stats.pendingUpdates}
+                description="Awaiting review"
+                icon={CalendarDays}
+                iconColor="text-amber-600"
+                iconBackground="bg-amber-100"
+                valueClassName="text-amber-600"
+                titleClassName="text-amber-600"
+                accentBorderClassName="border-t-[3px] border-amber-500"
+              />
+              <StatCard
+                title="Feedback Given"
+                value={progress.reduce((sum, p) => sum + p.feedbackCount, 0)}
+                description="This month"
+                icon={MessageSquare}
+                iconColor="text-emerald-600"
+                iconBackground="bg-emerald-100"
+                valueClassName="text-emerald-600"
+                titleClassName="text-emerald-600"
+                accentBorderClassName="border-t-[3px] border-emerald-500"
+              />
+            </>
+          )}
         </StatsGrid>
       </DashboardSection>
 
@@ -174,9 +215,15 @@ export function BuddyDashboard({ userName = "User" }: BuddyDashboardProps) {
             Daily update reviews and feedback per intern.
           </p>
         </div>
-        {internProgress.length > 0 ? (
+        {loading ? (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {internProgress.map((p) => (
+            {[0, 1, 2].map((i) => (
+              <InternProgressCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : progress.length > 0 ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {progress.map((p) => (
               <InternProgressCard
                 key={p.intern.id}
                 intern={p.intern}

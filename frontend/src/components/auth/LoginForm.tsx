@@ -1,88 +1,46 @@
-"use client";
+"use client"
 
-// import { AlertCircle } from "lucide-react";
-import Brand from "@/components/common/Brand";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import Brand from "@/components/common/Brand"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 export default function LoginForm() {
   return (
-    <div className="w-full max-w-xl">
+    <div className="w-full max-w-md">
+      <Brand centered subtitle="" />
 
-      {/* Heading */}
-    <div className="mb-10">
-      <Brand />
-    </div>
-
-      {/* Login Card */}
-
-      <Card className="rounded-none border border-border shadow-none">
-
-        <CardContent className="p-10 md:p-12">
-
-          <form className="space-y-7">
-
-            {/* Email */}
-
-            <div className="space-y-3">
-
-              <Label
-                htmlFor="email"
-                className="text-xs font-bold tracking-widest text-foreground"
-              >
-                Email
-              </Label>
-
+      <Card className="mt-6">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg">Sign In</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="intern@enterprise.com"
-                className="h-14 rounded-none border-input text-lg shadow-none focus-visible:ring-2"
               />
-
             </div>
 
-            {/* Password */}
-
-            <div className="space-y-3">
-
-              <Label
-                htmlFor="password"
-                className="text-xs font-bold tracking-widest text-foreground"
-              >
-                Password
-              </Label>
-
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 type="password"
                 placeholder="••••••••"
-                className="h-14 rounded-none border-input text-lg shadow-none focus-visible:ring-2"
               />
-
             </div>
 
-
-            {/* Button */}
-
-            <Button
-              type="submit"
-              className="h-14 w-full rounded-none bg-primary text-lg font-semibold hover:bg-[#1D4ED8]"
-            >
+            <Button type="submit" className="w-full">
               Sign In
             </Button>
-
           </form>
-
         </CardContent>
-
       </Card>
-
     </div>
-  );
+  )
 }

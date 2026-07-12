@@ -1,92 +1,94 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Plus } from "lucide-react"
 import { Role } from "@/lib/types/role"
 import type { User, CreateUserPayload, EditUserPayload } from "@/lib/types/user"
-import { mockUsers } from "@/lib/mock/users"
 
 import { Button } from "@/components/ui/button"
+import { TableSkeleton } from "@/components/ui/skeleton"
 import { AssignRelationshipSheet } from "@/components/users/AssignRelationshipSheet"
 import { AssignRoleSheet } from "@/components/users/AssignRoleSheet"
 import { UserFormDialog } from "@/components/users/UserFormDialog"
 import { UsersTable } from "@/components/users/UsersTable"
 
+import { userRepository } from "@/lib/repositories/user.repository"
+
 export default function UsersPage() {
-  const [users, setUsers] = useState<User[]>(mockUsers)
+  const [users, setUsers] = useState<User[]>([])
+  const [loading, setLoading] = useState(true)
   const [userFormOpen, setUserFormOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [roleSheetUser, setRoleSheetUser] = useState<User | null>(null)
   const [managerSheetUser, setManagerSheetUser] = useState<User | null>(null)
   const [buddySheetUser, setBuddySheetUser] = useState<User | null>(null)
 
-  let nextId = String(users.length + 1)
-
-  function handleCreate(data: CreateUserPayload | EditUserPayload) {
-    const payload = data as CreateUserPayload
-    const newUser: User = {
-      id: nextId,
-      fullName: payload.fullName,
-      email: payload.email,
-      role: payload.role,
-      department: payload.department,
-      isActive: true,
-      managerId: null,
-      buddyId: null,
-      internshipStart: payload.internshipStart ?? null,
-      internshipEnd: payload.internshipEnd ?? null,
-      createdAt: new Date().toISOString().split("T")[0],
+  useEffect(() => {
+    async function load() {
+      setLoading(true)
+      const loaded = await userRepository.getUsers()
+      setUsers(loaded)
+      setLoading(false)
     }
-    setUsers((prev) => [...prev, newUser])
-    nextId = String(Number(nextId) + 1)
+    load()
+  }, [])
+
+  async function handleCreate(data: CreateUserPayload | EditUserPayload) {
+    const payload = data as CreateUserPayload
+    const created = await userRepository.createUser(payload)
+    setUsers((prev) => [...prev, created])
     setUserFormOpen(false)
   }
 
-  function handleEdit(data: CreateUserPayload | EditUserPayload) {
+  async function handleEdit(data: CreateUserPayload | EditUserPayload) {
     if (!editingUser) return
     const payload = data as EditUserPayload
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === editingUser.id
-          ? {
-              ...u,
-              fullName: payload.fullName,
-              email: payload.email,
-              department: payload.department,
-              internshipStart: payload.internshipStart ?? u.internshipStart,
-              internshipEnd: payload.internshipEnd ?? u.internshipEnd,
-            }
-          : u,
-      ),
-    )
+    const updated = await userRepository.updateUser(editingUser.id, payload)
+    if (updated) {
+      setUsers((prev) =>
+        prev.map((u) => (u.id === editingUser.id ? updated : u)),
+      )
+    }
     setEditingUser(null)
     setUserFormOpen(false)
   }
 
-  function handleToggleActive(userId: string) {
-    setUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, isActive: !u.isActive } : u)),
-    )
+  async function handleToggleActive(userId: string) {
+    const updated = await userRepository.toggleUserStatus(userId)
+    if (updated) {
+      setUsers((prev) =>
+        prev.map((u) => (u.id === userId ? updated : u)),
+      )
+    }
   }
 
-  function handleAssignRole(userId: string, role: Role) {
-    setUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, role } : u)),
-    )
+  async function handleAssignRole(userId: string, role: Role) {
+    const updated = await userRepository.assignRole(userId, role)
+    if (updated) {
+      setUsers((prev) =>
+        prev.map((u) => (u.id === userId ? updated : u)),
+      )
+    }
     setRoleSheetUser(null)
   }
 
-  function handleAssignManager(userId: string, managerId: string | null) {
-    setUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, managerId } : u)),
-    )
+  async function handleAssignManager(userId: string, managerId: string | null) {
+    const updated = await userRepository.assignManager(userId, managerId)
+    if (updated) {
+      setUsers((prev) =>
+        prev.map((u) => (u.id === userId ? updated : u)),
+      )
+    }
     setManagerSheetUser(null)
   }
 
-  function handleAssignBuddy(userId: string, buddyId: string | null) {
-    setUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, buddyId } : u)),
-    )
+  async function handleAssignBuddy(userId: string, buddyId: string | null) {
+    const updated = await userRepository.assignBuddy(userId, buddyId)
+    if (updated) {
+      setUsers((prev) =>
+        prev.map((u) => (u.id === userId ? updated : u)),
+      )
+    }
     setBuddySheetUser(null)
   }
 
@@ -105,17 +107,21 @@ export default function UsersPage() {
         </Button>
       </div>
 
-      <UsersTable
-        users={users}
-        onEdit={(user) => {
-          setEditingUser(user)
-          setUserFormOpen(true)
-        }}
-        onToggleActive={handleToggleActive}
-        onAssignRole={setRoleSheetUser}
-        onAssignManager={setManagerSheetUser}
-        onAssignBuddy={setBuddySheetUser}
-      />
+      {loading ? (
+        <TableSkeleton rows={6} cols={6} />
+      ) : (
+        <UsersTable
+          users={users}
+          onEdit={(user) => {
+            setEditingUser(user)
+            setUserFormOpen(true)
+          }}
+          onToggleActive={handleToggleActive}
+          onAssignRole={setRoleSheetUser}
+          onAssignManager={setManagerSheetUser}
+          onAssignBuddy={setBuddySheetUser}
+        />
+      )}
 
       <UserFormDialog
         open={userFormOpen}

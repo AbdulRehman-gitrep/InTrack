@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Plus } from "lucide-react"
 
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import { TaskStatusBadge } from "@/components/common/TaskStatusBadge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,11 +13,11 @@ import { TasksTable } from "@/components/tasks/TasksTable"
 import { TaskFormDialog } from "@/components/tasks/TaskFormDialog"
 
 import type { Task, TaskStatus } from "@/lib/types/task"
+import type { User } from "@/lib/types/user"
 import { Role } from "@/lib/types/role"
-import { mockTasks } from "@/lib/mock/tasks"
-import { mockUsers } from "@/lib/mock/users"
-
 import { useSession } from "@/lib/context/session"
+import { taskRepository } from "@/lib/repositories/task.repository"
+import { userRepository } from "@/lib/repositories/user.repository"
 
 const statusOptions: { value: TaskStatus; label: string }[] = [
   { value: "assigned", label: "Assigned" },
@@ -24,14 +25,90 @@ const statusOptions: { value: TaskStatus; label: string }[] = [
   { value: "completed", label: "Completed" },
 ]
 
+function TaskCardSkeleton() {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-start justify-between pb-2">
+        <div className="space-y-2">
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="h-4 w-64" />
+        </div>
+        <Skeleton className="h-5 w-20 rounded-full" />
+      </CardHeader>
+      <CardContent className="flex items-center justify-between pt-2">
+        <div className="flex items-center gap-2">
+          <Skeleton className="size-6 rounded-full" />
+          <Skeleton className="h-4 w-28" />
+        </div>
+        <Skeleton className="h-8 w-28 rounded-lg" />
+      </CardContent>
+    </Card>
+  )
+}
+
+function TableSkeleton({ rows = 5 }: { rows?: number }) {
+  return (
+    <div className="overflow-x-auto rounded-xl border">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b bg-muted/50">
+            {["Task", "Status", "Assignee", "Due", "Priority"].map((h) => (
+              <th key={h} className="px-4 py-3">
+                <Skeleton className="h-3 w-16" />
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: rows }).map((_, r) => (
+            <tr key={r} className="border-b last:border-b-0">
+              <td className="px-4 py-3">
+                <div className="space-y-1">
+                  <Skeleton className="h-3 w-32" />
+                  <Skeleton className="h-3 w-48" />
+                </div>
+              </td>
+              {Array.from({ length: 4 }).map((_, c) => (
+                <td key={c} className="px-4 py-3">
+                  <Skeleton className="h-4 w-20" />
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
 export default function TasksPage() {
   const { user } = useSession()
-  const [tasks, setTasks] = useState(mockTasks)
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [allUsers, setAllUsers] = useState<User[]>([])
+  const [interns, setInterns] = useState<User[]>([])
   const [search, setSearch] = useState("")
+  const [loading, setLoading] = useState(true)
   const [formOpen, setFormOpen] = useState(false)
   const isManager = user.role === Role.MANAGER
   const isBuddy = user.role === Role.BUDDY
   const isIntern = user.role === Role.INTERN
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true)
+      const [loadedTasks, loadedUsers] = await Promise.all([
+        taskRepository.getTasks(),
+        userRepository.getUsers(),
+      ])
+      setTasks(loadedTasks)
+      setAllUsers(loadedUsers)
+      setInterns(loadedUsers.filter((u) => u.role === Role.INTERN && u.isActive))
+      setLoading(false)
+    }
+    load()
+  }, [])
+
+  const userMap = useMemo(() => new Map(allUsers.map((u) => [u.id, u])), [allUsers])
 
   const visibleTasks = useMemo(() => {
     if (isIntern) {
@@ -41,13 +118,13 @@ export default function TasksPage() {
       return tasks.filter((t) => t.createdBy === user.id)
     }
     if (isBuddy) {
-      const internIds = mockUsers
+      const internIds = allUsers
         .filter((u) => u.buddyId === user.id)
         .map((u) => u.id)
       return tasks.filter((t) => internIds.includes(t.assigneeId))
     }
     return tasks
-  }, [tasks, user.id, isIntern, isManager, isBuddy])
+  }, [tasks, allUsers, user.id, isIntern, isManager, isBuddy])
 
   const filtered = useMemo(
     () =>
@@ -59,31 +136,18 @@ export default function TasksPage() {
     [visibleTasks, search],
   )
 
-  function handleStatusChange(taskId: string, status: TaskStatus) {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, status } : t)),
-    )
+  async function handleStatusChange(taskId: string, status: TaskStatus) {
+    const updated = await taskRepository.updateTaskStatus(taskId, status)
+    if (updated) {
+      setTasks((prev) => prev.map((t) => (t.id === taskId ? updated : t)))
+    }
   }
 
-  function handleCreateTask(data: Omit<Task, "id" | "createdAt">) {
-    const newTask: Task = {
-      ...data,
-      id: String(Date.now()),
-      createdAt: new Date().toISOString().split("T")[0],
-    }
-    setTasks((prev) => [newTask, ...prev])
+  async function handleCreateTask(data: Omit<Task, "id" | "createdAt">) {
+    const created = await taskRepository.createTask(data)
+    setTasks((prev) => [created, ...prev])
     setFormOpen(false)
   }
-
-  const interns = useMemo(
-    () => mockUsers.filter((u) => u.role === Role.INTERN && u.isActive),
-    [],
-  )
-
-  const userMap = useMemo(
-    () => new Map(mockUsers.map((u) => [u.id, u])),
-    [],
-  )
 
   return (
     <div className="space-y-6">
@@ -115,7 +179,17 @@ export default function TasksPage() {
         className="max-w-sm"
       />
 
-      {isIntern ? (
+      {loading ? (
+        isIntern ? (
+          <div className="space-y-3">
+            {[0, 1, 2].map((i) => (
+              <TaskCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : (
+          <TableSkeleton rows={4} />
+        )
+      ) : isIntern ? (
         <div className="space-y-3">
           {filtered.map((task) => {
             const creator = userMap.get(task.createdBy)
@@ -172,7 +246,7 @@ export default function TasksPage() {
           )}
         </div>
       ) : (
-        <TasksTable tasks={filtered} users={mockUsers} />
+        <TasksTable tasks={filtered} users={allUsers} />
       )}
 
       {isManager && (

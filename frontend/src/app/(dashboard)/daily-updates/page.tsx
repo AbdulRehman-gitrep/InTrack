@@ -1,30 +1,45 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Send } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { UpdateCardSkeleton } from "@/components/ui/skeleton"
 import { UpdateCard } from "@/components/updates/UpdateCard"
 
 import { useSession } from "@/lib/context/session"
 
 import type { DailyUpdate } from "@/lib/types/update"
+import type { User } from "@/lib/types/user"
 import { Role } from "@/lib/types/role"
-import { mockDailyUpdates } from "@/lib/mock/daily-updates"
-import { mockUsers } from "@/lib/mock/users"
+import { updateRepository } from "@/lib/repositories/update.repository"
+import { userRepository } from "@/lib/repositories/user.repository"
 
 export default function DailyUpdatesPage() {
   const { user } = useSession()
-  const [updates, setUpdates] = useState(mockDailyUpdates)
+  const [updates, setUpdates] = useState<DailyUpdate[]>([])
+  const [allUsers, setAllUsers] = useState<User[]>([])
   const [content, setContent] = useState("")
   const [error, setError] = useState("")
+  const [loading, setLoading] = useState(true)
   const isIntern = user.role === Role.INTERN
 
-  const userMap = useMemo(
-    () => new Map(mockUsers.map((u) => [u.id, u])),
-    [],
-  )
+  useEffect(() => {
+    async function load() {
+      setLoading(true)
+      const [loadedUpdates, loadedUsers] = await Promise.all([
+        updateRepository.getDailyUpdates(),
+        userRepository.getUsers(),
+      ])
+      setUpdates(loadedUpdates)
+      setAllUsers(loadedUsers)
+      setLoading(false)
+    }
+    load()
+  }, [])
+
+  const userMap = useMemo(() => new Map(allUsers.map((u) => [u.id, u])), [allUsers])
 
   const visibleUpdates = useMemo(() => {
     if (isIntern) {
@@ -35,7 +50,7 @@ export default function DailyUpdatesPage() {
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
         )
     }
-    const internIds = mockUsers
+    const internIds = allUsers
       .filter(
         (u) =>
           u.role === Role.INTERN &&
@@ -48,33 +63,31 @@ export default function DailyUpdatesPage() {
         (a, b) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       )
-  }, [updates, user.id, isIntern])
+  }, [updates, allUsers, user.id, isIntern])
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!content.trim()) {
       setError("Write your update before submitting.")
       return
     }
-    const newUpdate: DailyUpdate = {
-      id: String(Date.now()),
+    const created = await updateRepository.submitDailyUpdate({
       internId: user.id,
       date: new Date().toISOString().split("T")[0],
       content: content.trim(),
-      isReviewed: false,
-      createdAt: new Date().toISOString(),
-    }
-    setUpdates((prev) => [newUpdate, ...prev])
+    })
+    setUpdates((prev) => [created, ...prev])
     setContent("")
     setError("")
   }
 
-  function handleToggleReview(updateId: string) {
-    setUpdates((prev) =>
-      prev.map((u) =>
-        u.id === updateId ? { ...u, isReviewed: !u.isReviewed } : u,
-      ),
-    )
+  async function handleToggleReview(updateId: string) {
+    const updated = await updateRepository.markUpdateReviewed(updateId)
+    if (updated) {
+      setUpdates((prev) =>
+        prev.map((u) => (u.id === updateId ? updated : u)),
+      )
+    }
   }
 
   return (
@@ -121,24 +134,32 @@ export default function DailyUpdatesPage() {
       </div>
 
       <div className="space-y-4">
-        {visibleUpdates.map((update) => (
-          <UpdateCard
-            key={update.id}
-            author={userMap.get(update.internId)!}
-            dateLabel={new Date(update.date).toLocaleDateString("en-US", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-            content={update.content}
-            isReviewed={update.isReviewed}
-            onToggleReview={
-              isIntern ? undefined : () => handleToggleReview(update.id)
-            }
-          />
-        ))}
-        {visibleUpdates.length === 0 && (
+        {loading ? (
+          <>
+            {[0, 1, 2].map((i) => (
+              <UpdateCardSkeleton key={i} />
+            ))}
+          </>
+        ) : (
+          visibleUpdates.map((update) => (
+            <UpdateCard
+              key={update.id}
+              author={userMap.get(update.internId)!}
+              dateLabel={new Date(update.date).toLocaleDateString("en-US", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+              content={update.content}
+              isReviewed={update.isReviewed}
+              onToggleReview={
+                isIntern ? undefined : () => handleToggleReview(update.id)
+              }
+            />
+          ))
+        )}
+        {!loading && visibleUpdates.length === 0 && (
           <p className="py-8 text-center text-sm text-muted-foreground">
             {isIntern
               ? "No updates submitted yet."

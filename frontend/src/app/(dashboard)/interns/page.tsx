@@ -1,29 +1,39 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { Role } from "@/lib/types/role"
 import type { User } from "@/lib/types/user"
-import { mockUsers } from "@/lib/mock/users"
 
 import { Input } from "@/components/ui/input"
+import { TableSkeleton } from "@/components/ui/skeleton"
 import { UsersTable } from "@/components/users/UsersTable"
 
 import { useSession } from "@/lib/context/session"
+import { userRepository } from "@/lib/repositories/user.repository"
 
 export default function InternsPage() {
   const { user } = useSession()
-  const currentUserId = user.id
-  const role = user.role
+  const [allUsers, setAllUsers] = useState<User[]>([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState("")
 
-  const interns = useMemo<User[]>(() => {
-    const all = mockUsers.filter((u) => u.role === Role.INTERN)
-    if (role === Role.BUDDY) {
-      return all.filter((u) => u.buddyId === currentUserId)
+  useEffect(() => {
+    async function load() {
+      setLoading(true)
+      const loaded = await userRepository.getUsers()
+      setAllUsers(loaded)
+      setLoading(false)
     }
-    return all
+    load()
   }, [])
 
-  const [search, setSearch] = useState("")
+  const interns = useMemo<User[]>(() => {
+    const all = allUsers.filter((u) => u.role === Role.INTERN)
+    if (user.role === Role.BUDDY) {
+      return all.filter((u) => u.buddyId === user.id)
+    }
+    return all
+  }, [allUsers, user.id, user.role])
 
   const filtered = useMemo(
     () =>
@@ -57,15 +67,19 @@ export default function InternsPage() {
         </p>
       </div>
 
-      <UsersTable
-        users={filtered}
-        role={role}
-        onEdit={() => {}}
-        onToggleActive={() => {}}
-        onAssignRole={() => {}}
-        onAssignManager={() => {}}
-        onAssignBuddy={() => {}}
-      />
+      {loading ? (
+        <TableSkeleton rows={4} cols={5} />
+      ) : (
+        <UsersTable
+          users={filtered}
+          role={user.role}
+          onEdit={() => {}}
+          onToggleActive={() => {}}
+          onAssignRole={() => {}}
+          onAssignManager={() => {}}
+          onAssignBuddy={() => {}}
+        />
+      )}
     </div>
   )
 }

@@ -1,31 +1,46 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Send } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { CardSkeleton } from "@/components/ui/skeleton"
 import { FeedbackCard } from "@/components/feedback/FeedbackCard"
 
 import { useSession } from "@/lib/context/session"
 
 import type { Feedback } from "@/lib/types/feedback"
+import type { User } from "@/lib/types/user"
 import { Role } from "@/lib/types/role"
-import { mockUsers } from "@/lib/mock/users"
-import { mockFeedback } from "@/lib/mock/feedback"
+import { feedbackRepository } from "@/lib/repositories/feedback.repository"
+import { userRepository } from "@/lib/repositories/user.repository"
 
 export default function FeedbackPage() {
   const { user } = useSession()
-  const [feedback, setFeedback] = useState(mockFeedback)
+  const [feedback, setFeedback] = useState<Feedback[]>([])
+  const [allUsers, setAllUsers] = useState<User[]>([])
   const [content, setContent] = useState("")
   const [recipientId, setRecipientId] = useState("")
   const [error, setError] = useState("")
+  const [loading, setLoading] = useState(true)
   const isIntern = user.role === Role.INTERN
 
-  const userMap = useMemo(
-    () => new Map(mockUsers.map((u) => [u.id, u])),
-    [],
-  )
+  useEffect(() => {
+    async function load() {
+      setLoading(true)
+      const [loadedFeedback, loadedUsers] = await Promise.all([
+        feedbackRepository.getFeedback(),
+        userRepository.getUsers(),
+      ])
+      setFeedback(loadedFeedback)
+      setAllUsers(loadedUsers)
+      setLoading(false)
+    }
+    load()
+  }, [])
+
+  const userMap = useMemo(() => new Map(allUsers.map((u) => [u.id, u])), [allUsers])
 
   const visibleFeedback = useMemo(
     () =>
@@ -39,11 +54,11 @@ export default function FeedbackPage() {
   )
 
   const interns = useMemo(
-    () => mockUsers.filter((u) => u.role === Role.INTERN && u.isActive),
-    [],
+    () => allUsers.filter((u) => u.role === Role.INTERN && u.isActive),
+    [allUsers],
   )
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!content.trim()) {
       setError("Write your feedback before submitting.")
@@ -53,14 +68,12 @@ export default function FeedbackPage() {
       setError("Select an intern.")
       return
     }
-    const newFeedback: Feedback = {
-      id: String(Date.now()),
+    const created = await feedbackRepository.createFeedback({
       fromId: user.id,
       toId: recipientId,
       content: content.trim(),
-      createdAt: new Date().toISOString(),
-    }
-    setFeedback((prev) => [newFeedback, ...prev])
+    })
+    setFeedback((prev) => [created, ...prev])
     setContent("")
     setRecipientId("")
     setError("")
@@ -128,16 +141,24 @@ export default function FeedbackPage() {
       </div>
 
       <div className="space-y-4">
-        {visibleFeedback.map((f) => (
-          <FeedbackCard
-            key={f.id}
-            from={userMap.get(f.fromId)!}
-            to={userMap.get(f.toId)!}
-            content={f.content}
-            createdAt={f.createdAt}
-          />
-        ))}
-        {visibleFeedback.length === 0 && (
+        {loading ? (
+          <>
+            {[0, 1, 2].map((i) => (
+              <CardSkeleton key={i} />
+            ))}
+          </>
+        ) : (
+          visibleFeedback.map((f) => (
+            <FeedbackCard
+              key={f.id}
+              from={userMap.get(f.fromId)!}
+              to={userMap.get(f.toId)!}
+              content={f.content}
+              createdAt={f.createdAt}
+            />
+          ))
+        )}
+        {!loading && visibleFeedback.length === 0 && (
           <p className="py-8 text-center text-sm text-muted-foreground">
             {isIntern
               ? "No feedback received yet."
